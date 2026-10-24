@@ -2,9 +2,8 @@
 
 <div align="center">
 
-<img src="dashboard/assets/neo_i_logo.png" alt="NEO-I" width="140">
 
-# NEO-I · Two-layer Cabinet Clustering
+Two-layer Cabinet Clustering
 
 **Turns telecom cabinets into daily field-work clusters: right-sized teams, reachable by road, staffed by the nearest workers.**
 
