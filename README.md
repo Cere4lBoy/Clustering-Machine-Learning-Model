@@ -66,13 +66,30 @@ The model runs in two layers, followed by a set of refinement steps.
 
 ```mermaid
 flowchart LR
-    A[Cabinets] --> P[PartitionPipeline]
-    B[Workers] --> P
-    C[parameters.csv] --> P
-    P --> M[ClusteringModel<br/>per partition]
-    M --> W[WorkerLayer<br/>per partition]
-    W --> R[Combined results]
-    R --> D[Dashboard]
+    A[("Cabinets<br/>mock_cabinets.csv")] --> P
+    B[("Workers<br/>mock_workers.csv")] --> P
+    R[["parameters.csv<br/>rules per partition"]] --> P
+    P{{"PartitionPipeline.ipynb"}} --> T1["TRIS_1"]
+    P --> T2["TROS_1"]
+    P --> T3["TROS_2 ..."]
+
+    subgraph M["For every partition"]
+        direction TB
+        D1["Demand Layer"] --> D2["Distance Layer<br/>by road"] --> D3["Minimum demand"] --> D4["Smaller teams"]
+        D4 --> D5["Leftovers"] --> D6["Save people"] --> D7["Fit the people available"] --> D8["Secondary cabinets"]
+        D8 --> W["Worker Layer"]
+    end
+
+    T1 --> M
+    T2 --> M
+    T3 --> M
+    M --> C[("combined/<br/>worker_cabinets.csv")]
+    C --> S["Dashboard"]
+
+    classDef blue fill:#1800e1,stroke:#150080,color:#ffffff;
+    classDef orange fill:#fb5e00,stroke:#c24600,color:#ffffff;
+    class P,S blue;
+    class C,R orange;
 ```
 
 ## Getting started
