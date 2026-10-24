@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Map of the Step by step tab. Streamlit's own chart is rebuilt whenever the figure changes, which resets the
+     zoom. This small component keeps one map alive and only updates what is drawn on it, so the view stays where
+     the user left it while the slider moves. plotly.min.js is copied here from the installed plotly package. -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="plotly.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; }
+    #map { width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    function send(type, data) {
+      window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type: type }, data), "*");
+    }
+
+    window.addEventListener("message", function (event) {
+      if (!event.data || event.data.type !== "streamlit:render") return;
+      var figure = JSON.parse(event.data.args.figure);
+      var map = document.getElementById("map");
+      map.style.height = figure.layout.height + "px";
+      // same uirevision in the layout = keep the zoom and position the user chose
+      Plotly.react(map, figure.data, figure.layout, { displaylogo: false, scrollZoom: true, responsive: true });
+      send("streamlit:setFrameHeight", { height: figure.layout.height });
+    });
+
+    send("streamlit:componentReady", { apiVersion: 1 });
+  </script>
+</body>
+</html>

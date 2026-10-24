@@ -1,0 +1,28 @@
+# Python and Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Saved road distances: large (150+ MB, over GitHub's 100 MB limit) and fetched again automatically
+cache/
+*.tmp
+
+# Real data stays on your own computer, never on GitHub
+Dataset/real/
+
+# Results are made on your own computer: only the folder's README is pushed
+outputs/*
+!outputs/README.md
+
+# Copied from the plotly package by the dashboard when it is missing
+dashboard/step_map/plotly.min.js
+
+# Editor settings
+.vscode/
+.idea/
+
+# Office lock files and system files
+~$*
+Thumbs.db
+desktop.ini
+.DS_Store

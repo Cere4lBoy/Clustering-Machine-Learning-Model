@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Telekom Malaysia palette (from the TM logo and brand element) */
+:root {
+  --tm-blue: #1800e1;
+  --tm-navy: #150080;
+  --tm-orange: #fb5e00;
+  --blue-soft: #eeebff;
+  --orange-soft: #fff1e8;
+  --ink: #1a1a2e;
+  --muted: #6b7090;
+  --line: #e4e6ef;
+  --surface: #f5f6fa;
+}
+
+html, body, [class*="css"], .stMarkdown, .stText, button, input, textarea {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.block-container { padding-top: 3.4rem; padding-bottom: 3rem; max-width: 1400px; }
+
+/* ---------- header ---------- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 4px 0 14px; border-bottom: 1px solid var(--line); position: relative;
+}
+.topbar::after {          /* thin TM blue + orange rule under the header */
+  content: ""; position: absolute; left: 0; bottom: -1px; width: 120px; height: 3px;
+  background: linear-gradient(90deg, var(--tm-blue) 0 70%, var(--tm-orange) 70% 100%);
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo { height: 52px; width: auto; }
+.brand-name { font-size: .78rem; font-weight: 700; letter-spacing: .14em; color: var(--tm-blue); }
+.brand-title { font-size: 1.55rem; font-weight: 700; color: var(--tm-navy); line-height: 1.15; }
+.partner { display: flex; align-items: center; gap: 18px; }
+.tm-logo { height: 40px; width: auto; }
+.tm-element { height: 52px; width: 52px; }
+.facts {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+  color: var(--muted); font-size: .86rem; margin: 10px 0 1.1rem;
+}
+.facts b { color: var(--ink); font-weight: 600; }
+.facts .sep { color: #c3c6d6; }
+
+/* ---------- model badges ---------- */
+.badge { display: inline-block; border-radius: 4px; padding: 1px 8px; font-size: .75rem; font-weight: 600; }
+.badge-v2 { background: var(--orange-soft); color: #c24600; }
+.badge-v4 { background: var(--blue-soft); color: var(--tm-blue); }
+
+/* ---------- model panel + KPI cards ---------- */
+.panel-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; color: var(--tm-navy); margin: .2rem 0; }
+.panel-about { color: var(--muted); font-size: .86rem; margin-bottom: .8rem; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+.kpi {
+  background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--accent, var(--tm-blue));
+  border-radius: 6px; padding: 12px 14px;
+}
+.kpi-label { color: var(--muted); font-size: .76rem; font-weight: 600; }
+.kpi-value { font-size: 1.45rem; font-weight: 700; color: var(--tm-navy); margin-top: 4px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-sub { color: var(--muted); font-size: .78rem; margin-top: 4px; }
+.empty-panel { border: 1px dashed var(--line); border-radius: 6px; padding: 24px; color: var(--muted); text-align: center; }
+.team-head { color: var(--tm-navy); font-size: .9rem; margin: 14px 0 6px; }
+.team-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px;
+  max-height: 210px; overflow-y: auto; padding-right: 4px;
+}
+.team-chip {
+  background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px;
+  font-size: .8rem; color: var(--tm-navy); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.team-chip.special { border-style: dashed; border-color: var(--tm-navy); }
+
+/* ---------- section titles ---------- */
+.section { font-size: 1rem; font-weight: 700; margin: 1.2rem 0 .3rem; color: var(--tm-navy); }
+.section-sub { color: var(--muted); font-size: .86rem; margin-bottom: .6rem; }
+
+/* ---------- tabs ---------- */
+.stTabs [data-baseweb="tab-list"] { gap: 4px; border-bottom: 1px solid var(--line); }
+.stTabs [data-baseweb="tab"] { height: 42px; padding: 0 16px; font-weight: 600; color: var(--muted); }
+.stTabs [aria-selected="true"] { color: var(--tm-navy) !important; }
+.stTabs [data-baseweb="tab-highlight"] { background-color: var(--tm-orange); height: 3px; }
+
+/* ---------- sidebar ---------- */
+section[data-testid="stSidebar"] { border-right: 1px solid var(--line); }
+[data-testid="stSidebarHeader"] img, [data-testid="stLogo"] { height: 3rem; width: auto; max-width: none; }
+.legend-card { border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; margin-bottom: 8px; background: #fff; }
+.legend-card .t { font-weight: 600; color: var(--tm-navy); display: flex; align-items: center; gap: 8px; }
+.legend-card .d { color: var(--muted); font-size: .8rem; margin-top: 2px; }
+
+/* ---------- buttons + uploader ---------- */
+.stDownloadButton button { border-color: var(--line); color: var(--tm-navy); }
+.stDownloadButton button:hover { border-color: var(--tm-blue); color: var(--tm-blue); background: var(--blue-soft); }
+div[data-testid="stFileUploaderDropzone"] { border: 1px dashed #b9b0ff; background: var(--blue-soft); border-radius: 6px; }
+
+@media (max-width: 640px) {
+  .tm-element { display: none; }
+  .brand-title { font-size: 1.25rem; }
+}

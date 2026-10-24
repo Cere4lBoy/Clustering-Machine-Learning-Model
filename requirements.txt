@@ -1,0 +1,15 @@
+# Python 3.13 (Anaconda) was used. Minimum versions = the ones tested.
+pandas>=2.3
+numpy>=2.3
+scipy>=1.16
+scikit-learn>=1.7
+shapely>=2.2
+folium>=0.20
+requests>=2.32
+matplotlib>=3.10
+# dashboard
+streamlit>=1.51
+plotly>=6.3
+nbformat>=5.10
+nbclient>=0.10
+ipykernel>=6.31

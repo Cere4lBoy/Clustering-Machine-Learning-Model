@@ -1,0 +1,5 @@
+partition,PEOPLE_PER_CLUSTER,MIN_PEOPLE,DEMAND_PER_PERSON,MIN_DEMAND_PER_PERSON,SOLO_MAX_DEMAND,RADIUS_KM,MAX_SECONDARY,TOTAL_PEOPLE,MAX_DEMAND_SCALE,FIT_ROUNDS,SEED,BALANCE_TOL,notes
+ALL,6,1,6,4,7,15,10,,3,5,67,1.0,a cabinet file without a partition column
+TRIS_1,6,1,6,4,7,15,10,,3,5,67,1.0,internal ground team
+TROS_1,6,1,6,4,7,15,10,,3,5,67,1.0,external team
+TROS_2,6,1,7,4,,15,10,,3,5,67,1.0,external team: up to 7 tickets per person
