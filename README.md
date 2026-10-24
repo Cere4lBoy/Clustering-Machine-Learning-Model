@@ -1,281 +1,182 @@
-<a id="top"></a>
-
-<div align="center">
-
-
 # Two-layer Cabinet Clustering
 
-**Turns telecom cabinets into daily field-work clusters: right-sized teams, reachable by road, staffed by the nearest workers.**
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-red)
+![OSRM](https://img.shields.io/badge/routing-OSRM-green)
+![scikit-learn](https://img.shields.io/badge/clustering-scikit--learn-orange)
 
-<p>
-  <img src="https://img.shields.io/badge/Python-3.11+-1800e1?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Jupyter-Notebooks-fb5e00?style=for-the-badge&logo=jupyter&logoColor=white" alt="Jupyter">
-  <img src="https://img.shields.io/badge/Streamlit-Dashboard-1800e1?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
-  <img src="https://img.shields.io/badge/OSRM-Road%20distances-fb5e00?style=for-the-badge&logo=openstreetmap&logoColor=white" alt="OSRM">
-  <img src="https://img.shields.io/badge/scikit--learn-k--means-1800e1?style=for-the-badge&logo=scikitlearn&logoColor=white" alt="scikit-learn">
-  <img src="https://img.shields.io/badge/shapely-Outlines-fb5e00?style=for-the-badge" alt="shapely">
-</p>
+A planning model that groups telecom cabinets into daily field-work clusters and assigns field workers to them.
+Each cluster is one day of work for one team. The model sizes every team to its cluster's expected ticket load,
+keeps every cabinet within a set road distance of the cluster centre, and staffs each cluster with the nearest
+available workers.
 
-[🎬 Demo](#demo) · [✨ What it does](#features) · [🧭 How it works](#how-it-works) · [🚀 Quick start](#quick-start) · [📊 Dashboard](#dashboard) · [🗂️ Structure](#structure)
+## Contents
 
-</div>
+- [Demo](#demo)
+- [Overview](#overview)
+- [Method](#method)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [Outputs](#outputs)
+- [Dashboard](#dashboard)
+- [Repository layout](#repository-layout)
+- [Data](#data)
 
----
-
-<a id="demo"></a>
-
-## 🎬 Demo
-
-<div align="center">
+## Demo
 
 <!-- Replace VIDEO_ID (two places) with the ID of the YouTube video: https://youtu.be/VIDEO_ID -->
-<a href="https://youtu.be/VIDEO_ID">
-  <img src="https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg" alt="Watch the NEO-I demo on YouTube" width="760">
-</a>
+[![Demo video](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/VIDEO_ID)
 
-<sub>▶ Click to watch the walkthrough: from the cabinet file to the dashboard.</sub>
+A walkthrough from the input files to the dashboard.
 
-</div>
+## Overview
 
----
+The input is a list of cabinets with their location and expected tickets per day, and a list of workers with their
+base location. Cabinets and workers belong to a partition: `TRIS_1` is the internal ground team, and `TROS_1`,
+`TROS_2` and so on are external contractors. Every partition is planned separately, with its own rules, and the results
+are combined at the end.
 
-<a id="features"></a>
+Every cluster satisfies three rules:
 
-## ✨ What it does
+| Rule | Description |
+|---|---|
+| Demand | A team of *n* people takes between *n* × `MIN_DEMAND_PER_PERSON` and *n* × `DEMAND_PER_PERSON` tickets per day. |
+| Distance | Every cabinet is within `RADIUS_KM` of the cluster centre by road. |
+| No overlap | The convex hull of a cluster's cabinets does not overlap that of any other cluster. |
 
-Every cluster is **one day of field work for one team**, a card on the manager's calendar. The model decides how many
-clusters there are, which cabinets go in each, how many people each one needs, and who those people are.
+Every cabinet is assigned to exactly one cluster. Cabinets that can only be placed with a fallback rule are flagged in
+the output.
 
-<table>
-<tr>
-<td width="50%" valign="top">
+## Method
 
-### 📦 Demand Layer
-Splits the cabinets with demand-weighted k-means, repairs any cluster over its team's maximum and evens out the load,
-so every day is a worthwhile one.
+The model runs in two layers, followed by a set of refinement steps.
 
-</td>
-<td width="50%" valign="top">
-
-### 🛣️ Distance Layer
-Keeps every cabinet within `RADIUS_KM` **by road** of its cluster centre, using our own OSRM server on OpenStreetMap
-roads. A straight line is only a flagged last resort.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 👥 Right-sized teams
-Quiet areas get smaller teams, down to one person. *Save people* passes cabinets on wherever that lets a cluster drop
-a person.
-
-</td>
-<td valign="top">
-
-### ⚖️ Fit to the people available
-The demand is scaled so the clusters use the people who are actually there, and the model reruns until the teams fit.
-
-</td>
-</tr>
-<tr>
-<td valign="top">
-
-### 🧩 Partitions
-TRIS (internal ground team) and every TROS contractor are planned on their own, each with its **own rules** from
-`parameters.csv`, then combined into one result.
-
-</td>
-<td valign="top">
-
-### 🧑‍🔧 Worker Layer
-Fills each cluster with the nearest workers of its partition, using the Hungarian method on road distances. Every
-worker gets a list of Primary and Secondary cabinets.
-
-</td>
-</tr>
-</table>
-
----
-
-<a id="how-it-works"></a>
-
-## 🧭 How it works
+1. **Demand layer.** The number of clusters is set from the total demand. Demand-weighted k-means makes the first
+   split; a repair step moves cabinets out of overloaded clusters, and a balancing step evens out the load.
+2. **Distance layer.** Road distances from each centre to its cabinets come from a local OSRM server. Cabinets beyond
+   `RADIUS_KM` are moved to a neighbouring cluster, separated, or their cluster is split.
+3. **Minimum demand.** Clusters below a full team's minimum are merged, shared out or topped up from neighbours.
+4. **Smaller teams.** Clusters in quiet areas are given smaller teams, one person fewer per round.
+5. **Leftovers.** Clusters that fit no team size are dissolved into the nearest cluster.
+6. **Staffing fit.** Demand is scaled so the clusters use the workers available, and the model is rerun until the team
+   sizes fit.
+7. **Secondary cabinets.** Each cluster lists nearby cabinets of other clusters as backup work.
+8. **Worker layer.** Workers are matched to clusters with the Hungarian method, minimising the total road distance
+   from their bases.
 
 ```mermaid
 flowchart LR
-    A[("Cabinets<br/>mock_cabinets.csv")] --> P
-    B[("Workers<br/>mock_workers.csv")] --> P
-    R[["parameters.csv<br/>rules per partition"]] --> P
-    P{{"PartitionPipeline.ipynb"}} --> T1["TRIS_1"]
-    P --> T2["TROS_1"]
-    P --> T3["TROS_2 ..."]
-
-    subgraph M["For every partition"]
-        direction TB
-        D1["Demand Layer"] --> D2["Distance Layer<br/>by road"] --> D3["Minimum demand"] --> D4["Smaller teams"]
-        D4 --> D5["Leftovers"] --> D6["Save people"] --> D7["Fit the people available"] --> D8["Secondary cabinets"]
-        D8 --> W["Worker Layer"]
-    end
-
-    T1 --> M
-    T2 --> M
-    T3 --> M
-    M --> C[("combined/<br/>worker_cabinets.csv")]
-    C --> S["📊 Dashboard"]
-
-    classDef tm fill:#1800e1,stroke:#150080,color:#ffffff;
-    classDef orange fill:#fb5e00,stroke:#c24600,color:#ffffff;
-    class P,S tm;
-    class C,R orange;
+    A[Cabinets] --> P[PartitionPipeline]
+    B[Workers] --> P
+    C[parameters.csv] --> P
+    P --> M[ClusteringModel<br/>per partition]
+    M --> W[WorkerLayer<br/>per partition]
+    W --> R[Combined results]
+    R --> D[Dashboard]
 ```
 
-**Three rules every cluster keeps**
+## Getting started
 
-| | Rule | In short |
-|---|---|---|
-| 1️⃣ | **Demand** | A team of *n* takes between *n* × `MIN_DEMAND_PER_PERSON` and *n* × `DEMAND_PER_PERSON` tickets/day. |
-| 2️⃣ | **Distance** | Every cabinet is within `RADIUS_KM` by road of its centre. |
-| 3️⃣ | **No overlap** | The outline around a cluster's cabinets never overlaps another cluster's outline. |
+### Requirements
 
-Every cabinet ends up in exactly one cluster. Cabinets that need a fallback are flagged, so nothing breaks a rule
-without it showing.
+- Python 3.11 or later
+- A local OSRM server with a Malaysia extract from Geofabrik (set-up steps in `start_osrm.bat`)
 
----
-
-<a id="quick-start"></a>
-
-## 🚀 Quick start
-
-**1. Install the packages** (once)
+### Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**2. Start the road server.** Double-click `start_osrm.bat` and keep its window open; the one-time set-up steps are
-at the top of that file.
+### Usage
 
-**3. Check the rules.** Open `parameters.csv`: one row per partition. A new contractor only needs a new row.
-
-**4. Run the pipeline.** Open `PartitionPipeline.ipynb`, set `CABINET_FILE` and `WORKER_FILE` in the first cell and
-run all cells. The results go to `outputs/partitions/`.
-
-**5. Explore.** Double-click `run_dashboard.bat`, or:
+1. Start the road server with `start_osrm.bat` and keep its window open.
+2. Review `parameters.csv`. It holds one row per partition.
+3. Open `PartitionPipeline.ipynb`, set `CABINET_FILE` and `WORKER_FILE` in the first cell, and run all cells.
+4. Open the dashboard:
 
 ```bash
 python -m streamlit run dashboard/app.py
 ```
 
-> [!TIP]
-> To plan a single partition by hand, run `ClusteringModel.ipynb` with `PARTITION` set, then `WorkerLayer.ipynb`
-> with the same `PARTITION`.
+To plan a single partition, run `ClusteringModel.ipynb` with `PARTITION` set, then `WorkerLayer.ipynb` with the same
+value.
 
----
+## Configuration
 
-<a id="dashboard"></a>
+Model rules are read from `parameters.csv`, one row per partition. Adding a partition only needs a new row.
 
-## 📊 Dashboard
-
-| Tab | What you get |
-|---|---|
-| **Overview** | Clusters, people needed and available, fill rate, demand scale and the team of every cluster |
-| **Analytics** | Workload, fill rate, tickets per person, team mix, distance curves, demand against reach, backup work, workers' trips |
-| **Partitions** | All partitions **combined** (with a filter) or **side by side**, with their rules compared and differences marked |
-| **Maps** | The interactive cluster map: outlines, territories, centres and flagged cabinets |
-| **Step by step** | Every step of the model on a map, from the first split to the final clusters |
-| **Secondary view** | One cluster's own cabinets and the backup work around it |
-| **Clusters** | Searchable tables and downloads |
-| **Workers** | Who works where, every base and trip, and empty places |
-| **New run** | Upload a cabinet file, set the rules and run the model |
-
----
-
-## ⚙️ Model rules
-
-<details>
-<summary><b>parameters.csv</b>: one row per partition (click to open)</summary>
-
-<br>
-
-| Column | Meaning | Blank means |
+| Column | Description | Default when blank |
 |---|---|---|
-| `PEOPLE_PER_CLUSTER` | biggest team | required |
-| `MIN_PEOPLE` | smallest team | required |
-| `DEMAND_PER_PERSON` | most tickets/day for one person | required |
-| `MIN_DEMAND_PER_PERSON` | fewest tickets/day that make a worthwhile day | required |
-| `SOLO_MAX_DEMAND` | special case: one person may take up to this | no special case |
-| `RADIUS_KM` | every cabinet within this road distance of its centre | required |
-| `MAX_SECONDARY` | backup cabinets kept per cluster | keep all |
-| `TOTAL_PEOPLE` | people available per day | count the partition's workers |
-| `MAX_DEMAND_SCALE` · `FIT_ROUNDS` · `SEED` · `BALANCE_TOL` | fitting and tuning | 3 · 5 · 67 · 1.0 |
+| `PEOPLE_PER_CLUSTER` | Largest team size | required |
+| `MIN_PEOPLE` | Smallest team size | required |
+| `DEMAND_PER_PERSON` | Maximum tickets per person per day | required |
+| `MIN_DEMAND_PER_PERSON` | Minimum tickets per person per day | required |
+| `SOLO_MAX_DEMAND` | Upper limit for a one-person cluster, used only when needed | equal to `DEMAND_PER_PERSON` |
+| `RADIUS_KM` | Maximum road distance from cabinet to cluster centre | required |
+| `MAX_SECONDARY` | Number of secondary cabinets kept per cluster | all |
+| `TOTAL_PEOPLE` | Workers available per day | count of the partition's workers |
+| `MAX_DEMAND_SCALE` | Maximum factor by which demand may be scaled up | 3 |
+| `FIT_ROUNDS` | Maximum reruns to fit the available workers | 5 |
+| `SEED` | Random seed for k-means | 67 |
+| `BALANCE_TOL` | Load difference at which balancing stops, in tickets per day | 1.0 |
 
-```csv
-partition,PEOPLE_PER_CLUSTER,MIN_PEOPLE,DEMAND_PER_PERSON,MIN_DEMAND_PER_PERSON,SOLO_MAX_DEMAND,RADIUS_KM,...
-TRIS_1,6,1,6,4,7,15,...
-TROS_2,6,1,7,4,,15,...
-```
+## Outputs
 
-</details>
+Results are written to `outputs/partitions/`, with one folder per partition and a `combined/` folder for all
+partitions together. The main file is `combined/worker_cabinets.csv`, with one row per worker and cabinet:
 
----
+| Column | Description |
+|---|---|
+| `staff_id` | Worker ID |
+| `CabinetId` | Cabinet ID |
+| `type` | `Primary` for a cabinet in the worker's own cluster, `Secondary` for nearby backup work |
+| `partition` | Partition of the worker and the cluster |
+| `cluster_id` | Cluster ID, prefixed with the partition (for example `TRIS_1-C001`) |
 
-## 📦 Outputs
+The combined folder also contains `clusters.csv`, `assignments.csv`, `teams.csv`, `secondaries.csv`,
+`worker_assignments.csv`, `cluster_workers.csv` and `summary.csv`. Each partition folder includes interactive maps.
 
-The main result is **`outputs/partitions/combined/worker_cabinets.csv`**: one row per worker and cabinet.
+## Dashboard
 
-| staff_id | CabinetId | type | partition | cluster_id |
-|---|---|---|---|---|
-| `N01_001` | `CAB0123` | **Primary**: a cabinet of the worker's own cluster | `TRIS_1` | `TRIS_1-C001` |
-| `N01_001` | `CAB0456` | **Secondary**: backup work nearby | `TRIS_1` | `TRIS_1-C001` |
+The Streamlit dashboard reads the results and can run the model on a new file.
 
-Next to it: `clusters.csv`, `teams.csv`, `assignments.csv`, `secondaries.csv`, `worker_assignments.csv`,
-`cluster_workers.csv` and a `summary.csv` per partition and in total. Every partition also gets its own interactive
-maps.
+| Tab | Content |
+|---|---|
+| Overview | Clusters, people required and available, fill rate, team per cluster |
+| Analytics | Workload, fill rate, tickets per person, team sizes, distances, backup work, worker trips |
+| Partitions | All partitions combined with a filter, or two partitions side by side with their rules compared |
+| Maps | Interactive cluster map |
+| Step by step | The clusters after each step of the model |
+| Secondary view | A cluster's own cabinets and the backup work around it |
+| Clusters | Searchable cluster and cabinet tables, with downloads |
+| Workers | Worker assignments, bases, trip distances and unfilled places |
+| New run | Upload a cabinet file, set the rules and run the model |
 
----
-
-<a id="structure"></a>
-
-## 🗂️ Project structure
-
-<details>
-<summary>Click to open</summary>
+## Repository layout
 
 ```text
 .
-├── PartitionPipeline.ipynb    # start here: every partition, combined
-├── ClusteringModel.ipynb      # the model, for one partition
-├── WorkerLayer.ipynb          # the nearest workers for every cluster
-├── parameters.csv             # the rules, one row per partition
-├── dashboard/                 # Streamlit dashboard (app, loaders, runner, theme)
-├── Dataset/                   # mock cabinets and workers (real data stays local)
-├── tools/                     # notebooks that make the mock data
-├── previous_versions/         # earlier versions of the model, for reference
-├── docs/                      # slides and low-level design
-├── start_osrm.bat             # starts the local road server
-├── run_dashboard.bat          # opens the dashboard
+├── PartitionPipeline.ipynb    Runs every partition and combines the results
+├── ClusteringModel.ipynb      Clustering model for one partition
+├── WorkerLayer.ipynb          Assigns workers to the clusters of one partition
+├── parameters.csv             Model rules, one row per partition
+├── dashboard/                 Streamlit dashboard
+├── Dataset/                   Sample cabinet and worker files
+├── tools/                     Notebooks that generate the sample data
+├── previous_versions/         Earlier versions of the model
+├── docs/                      Slides and low-level design
+├── start_osrm.bat             Starts the local OSRM server
+├── run_dashboard.bat          Starts the dashboard
 └── requirements.txt
 ```
 
-</details>
+## Data
+
+The repository contains generated sample data only (`Dataset/mock_cabinets.csv` and `Dataset/mock_workers.csv`).
+Real input files belong in `Dataset/real/`, and results in `outputs/`; both are excluded by `.gitignore`. Road
+distances are computed on a local OSRM server, so no location data is sent to external services.
 
 ---
 
-## 🔒 Data
-
-Only made-up data is in this repo: `Dataset/mock_cabinets.csv` and `Dataset/mock_workers.csv`. Real files go in
-`Dataset/real/`, and results in `outputs/`; neither is pushed. Road distances come from a local OSRM server, so no
-coordinates leave the machine.
-
----
-
-<div align="center">
-
-<img src="dashboard/assets/neo_i_logo.png" alt="NEO-I" width="48">
-
-<sub>Built during an internship at <b>Telekom Malaysia</b> · NEO-I</sub>
-
-<sub><a href="#top">↑ Back to top</a></sub>
-
-</div>
+Developed during an internship at Telekom Malaysia.
