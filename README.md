@@ -195,5 +195,3 @@ Real input files belong in `Dataset/real/`, and results in `outputs/`; both are 
 distances are computed on a local OSRM server, so no location data is sent to external services.
 
 ---
-
-Developed during an internship at Telekom Malaysia.
