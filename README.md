@@ -25,7 +25,7 @@ available workers.
 ## Demo
 
 <!-- Replace VIDEO_ID (two places) with the ID of the YouTube video: https://youtu.be/VIDEO_ID -->
-[![Demo video](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/VIDEO_ID)
+[![Demo video](https://img.youtube.com/vi/fzzpHsWy7mc/maxresdefault.jpg)](https://youtu.be/fzzpHsWy7mc)
 
 A walkthrough from the input files to the dashboard.
 
