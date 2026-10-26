@@ -1,4 +1,4 @@
-# Two-layer Cabinet Clustering
+# "Two"-layer Cabinet Clustering
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Streamlit](https://img.shields.io/badge/dashboard-Streamlit-red)
@@ -25,7 +25,7 @@ available workers.
 ## Demo
 
 <!-- Replace VIDEO_ID (two places) with the ID of the YouTube video: https://youtu.be/VIDEO_ID -->
-[![Demo video](https://img.youtube.com/vi/fzzpHsWy7mc/maxresdefault.jpg)](https://youtu.be/fzzpHsWy7mc)
+[![Demo video](https://img.youtube.com/vi/4EUoficTd20/maxresdefault.jpg)](https://youtu.be/4EUoficTd20)
 
 A walkthrough from the input files to the dashboard.
 
